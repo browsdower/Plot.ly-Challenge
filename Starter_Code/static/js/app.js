@@ -1,6 +1,6 @@
 function buildCharts(samples) {
-    // Make an API call to gather all data and then reduce to matching the sample selected
-    //TODO: 
+//     // Make an API call to gather all data and then reduce to matching the sample selected
+//     //TODO: 
     d3.json("samples.json").then(function(data) {
 
       var wfreq = data.metadata.map(d => d.wfreq)
@@ -20,7 +20,7 @@ function buildCharts(samples) {
       // get the otu id's to the desired form for the plot
       var OTU_id = OTU_top.map(d => "OTU " + d)
 
-    //   console.log(`OTU IDS: ${OTU_id}`)
+      console.log(`OTU IDS: ${OTU_id}`)
 
 
       // get the top 10 labels for the plot
@@ -87,24 +87,25 @@ function buildMetadata(sample) {
     // Make an API call to gather all data and then reduce to matching the sample selected
     //TODO: 
     d3.json("samples.json").then(function(data) {
-    // Use d3 to select the panel with id of `#sample-metadata`
-    var selector = d3.select("#sample-metadata").html("");
-    // Use `.html("") to clear any existing metadata
-    selector.html("");
+    /// get the metadata info for the demographic panel
+    var metadata = data.metadata;
 
-    // Use `Object.entries` to add each key and value pair to the panel
-    // Hint: Inside the loop, you will need to use d3 to append new
-    // tags for each key-value in the metadata.
+    console.log(metadata)
 
-    for (i = 0; i < 5; i++) {
-      selector.append("text").html("<font size='1'>" 
-        + Object.entries(data)[i][0] + ": " 
-        + Object.entries(data)[i][1] + "</font><br>");  
-    };
+    // filter meta data info by id
+    var result = metadata.filter(meta => meta.id.toString() === id)[0];
 
-    selector.append("text").html("<font size='1'>SAMPLEID: " + Object.entries(data)[6][1] + "</font><br>");
+    // select demographic panel to put data
+    var demographicInfo = d3.select("#sample-metadata");
+    
+    // empty the demographic info panel each time before getting new id info
+    demographicInfo.html("");
 
-  });  
+    // grab the necessary demographic data data for the id and append the info to the panel
+    Object.entries(result).forEach((key) => {   
+            demographicInfo.append("h5").text(key[0].toUpperCase() + ": " + key[1] + "\n");    
+    });
+});
 }
 
 function init() {
@@ -114,12 +115,12 @@ function init() {
     
 
 
-    // d3.json("/names").then((sampleNames) => {
-    //   sampleNames.forEach((sample) => {
-    //     selector
-    //       .append("option")
-    //       .text("BB_" + sample)
-    //       .property("value", sample);
+    d3.json("/names").then((sampleNames) => {
+      sampleNames.forEach((sample) => {
+        selector
+          .append("option")
+          .text("BB_" + sample)
+          .property("value", sample);
 
     // Use the list of sample names to populate the select options
     
@@ -137,13 +138,13 @@ function init() {
 
 
     });
-  }
+  
   
 function optionChanged(newSample) {
     // Fetch new data each time a new sample is selected
     buildCharts(newSample);
     buildMetadata(newSample);
-  }
+      }
   
   // Initialize the dashboard
-init();
+  // init();
