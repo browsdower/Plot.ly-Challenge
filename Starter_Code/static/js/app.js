@@ -1,7 +1,8 @@
-function buildCharts(samples) {
-//     // Make an API call to gather all data and then reduce to matching the sample selected
-//     //TODO: 
-    d3.json("samples.json").then(function(data) {
+
+function buildCharts(sample) {
+  // getting data from the json file
+  d3.json("samples.json").then(function(data) {
+      console.log(data)
 
       var wfreq = data.metadata.map(d => d.wfreq)
       console.log(`Washing Freq: ${wfreq}`)
@@ -20,15 +21,11 @@ function buildCharts(samples) {
       // get the otu id's to the desired form for the plot
       var OTU_id = OTU_top.map(d => "OTU " + d)
 
-      console.log(`OTU IDS: ${OTU_id}`)
-
-
       // get the top 10 labels for the plot
       var labels = samples.otu_labels.slice(0, 10);
 
-    //   console.log(`Sample Values: ${samplevalues}`)
-    //   console.log(`Id Values: ${OTU_top}`)
-      // create trace variable for the plot
+    
+      // create bar
       var trace = {
           x: samplevalues,
           y: OTU_id,
@@ -39,10 +36,10 @@ function buildCharts(samples) {
           orientation: "h",
       };
 
-      // create data variable
+      
       var data = [trace];
 
-      // create layout variable to set plots layout
+      // layout
       var layout = {
           title: "Top 10 OTU",
           yaxis:{
@@ -56,95 +53,92 @@ function buildCharts(samples) {
           }
       };
 
-      // create the bar plot
+      // create plot
       Plotly.newPlot("bar", data, layout);
 
-      var sample_data = otu_ids.map( (x, i) => {
-        return {"otu_ids": x, "otu_labels": otu_labels[i], "sample_values": sample_values[i]}        
-      });
-  
-      sample_data = sample_data.sort(function(a, b) {
-        return b.sample_values - a.sample_values;
-      });
-  
-      sample_data = sample_data.slice(0, 10);
-  
-      var trace2 = {
-        labels: sample_data.map(row => row.otu_ids),
-        values: sample_data.map(row => row.sample_values),
-        hovertext: sample_data.map(row => row.otu_labels),
-        type: 'bar'
+      
+    
+      // create bubble
+      var trace1 = {
+          x: samples.otu_ids,
+          y: samples.sample_values,
+          mode: "markers",
+          marker: {
+              size: samples.sample_values,
+              color: samples.otu_ids
+          },
+          text: samples.otu_labels
+
       };
-  
-      var data2 = [trace2];
-  
-      Plotly.newPlot("bar", data2);
-  
+
+      // layout
+      var layout_b = {
+          xaxis:{title: "OTU ID"},
+          height: 600,
+          width: 1000
+      };
+
+      
+      var data1 = [trace1];
+
+      // create plot
+      Plotly.newPlot("bubble", data1, layout_b); 
+
+      
     });
-  }
+}  
 
 function buildMetadata(sample) {
-    // Make an API call to gather all data and then reduce to matching the sample selected
-    //TODO: 
-    d3.json("samples.json").then(function(data) {
-    /// get the metadata info for the demographic panel
-    var metadata = data.metadata;
+  // Make an API call to gather all data and then reduce to matching the sample selected
+  d3.json("samples.json").then(function(data) {
+      
+      // get the info from metadata
+      var metadata = data.metadata;
 
-    console.log(metadata)
+      console.log(metadata)
 
-    // filter meta data info by id
-    var result = metadata.filter(meta => meta.id.toString() === id)[0];
+      // filter samples for id
+      var result = metadata.filter(meta => meta.id.toString() === id)[0];
 
-    // select demographic panel to put data
-    var demographicInfo = d3.select("#sample-metadata");
-    
-    // empty the demographic info panel each time before getting new id info
-    demographicInfo.html("");
+      var demoInfo = d3.select("#sample-metadata");
+      
+      demoInfo.html("");
 
-    // grab the necessary demographic data data for the id and append the info to the panel
-    Object.entries(result).forEach((key) => {   
-            demographicInfo.append("h5").text(key[0].toUpperCase() + ": " + key[1] + "\n");    
-    });
-});
+      // refresh panel
+      Object.entries(result).forEach((key) => {   
+              demographicInfo.append("h5").text(key[0].toUpperCase() + ": " + key[1] + "\n");    
+      });
+  });
 }
 
+
+
+
 function init() {
-    
-    // Grab a reference to the dropdown select element
-    var selector = d3.select("#selDataset");
-    
+  //Grab a reference to the dropdown select element
+  var dropdown = d3.select("#selDataset");
 
+  // Use the list of sample names to populate the select options
+  d3.json("samples.json").then(function(data) {
+      console.log(data)
 
-    d3.json("/names").then((sampleNames) => {
-      sampleNames.forEach((sample) => {
-        selector
-          .append("option")
-          .text("BB_" + sample)
-          .property("value", sample);
-
-    // Use the list of sample names to populate the select options
-    
-    d3.json("samples.json").then((data) => {
-      var sampleNames = data.names;
-      
       // Use the first sample from the list to build the initial plots
-      
-      var firstSample = sampleNames[0];
-      buildCharts(firstSample);
-      buildMetadata(firstSample);
+      buildCharts(data.names[0]);
+      buildMetadata(data.names[0]);
 
       // Loop through sampleNames to add "option" elements to the selector
-      //TODO: 
+      data.names.forEach(function(name) {
+          dropdown.append("option").text(name).property("value");
+      });
 
+      
+  });
+}
 
-    });
-  
-  
+// Fetch new data each time a new sample is selected
 function optionChanged(newSample) {
-    // Fetch new data each time a new sample is selected
-    buildCharts(newSample);
-    buildMetadata(newSample);
-      }
-  
-  // Initialize the dashboard
-  // init();
+  buildCharts(newSample);
+  buildMetadata(newSample);
+}
+// Initialize the dashboard
+init();
